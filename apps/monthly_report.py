@@ -51,8 +51,7 @@ def enrich(spark, folder):
 
 
 def summarise(enriched):
-    ("One row for each month and category "
-     "(chapter 6's conditional aggregates).")
+    """One row for each month and category."""
     delivered = F.col("order_status") == "Delivered"
     credited = F.col("reward_status") == "Credited"
     failed = F.col("payment_status") == "Failed"
@@ -84,7 +83,7 @@ def main():
     print(f"monthly report on {spark.sparkContext.master}: "
           f"{args.input} -> {args.output}")
     report = summarise(enrich(spark, args.input))
-    # chapter 12
+    # the partitioned write is chapter 12's
     report.write.mode("overwrite").partitionBy("order_month").parquet(
         args.output)
     spark.stop()

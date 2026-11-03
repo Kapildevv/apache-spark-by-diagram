@@ -37,7 +37,7 @@ spark.conf.set("spark.sql.autoBroadcastJoinThreshold", "-1")
 shape("threshold -1", orders.join(products, "product_id"))
 shape("broadcast hint, -1",
       orders.join(products.hint("broadcast"), "product_id"))
-# the default again
+# back to the default threshold
 spark.conf.set("spark.sql.autoBroadcastJoinThreshold", "10m")
 
 big = bigger_orders(spark, 10000)
