@@ -1,0 +1,2 @@
+# Keep the data byte-for-byte as the book verified it (CRLF rows).
+*.csv -text
