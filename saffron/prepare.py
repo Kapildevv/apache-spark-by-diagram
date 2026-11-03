@@ -22,17 +22,24 @@ def orders_with_dates(orders):
 def customers_masked(customers):
     """Chapter 4. Add full_name and email_masked ('i***@example.com'), then drop the raw email."""
     return (customers
-            .withColumn("full_name", F.concat_ws(" ", "first_name", "last_name"))
-            .withColumn("email_masked", F.regexp_replace("email", r"^(.)[^@]*@", "$1***@"))
+            .withColumn("full_name",
+                        F.concat_ws(" ", "first_name", "last_name"))
+            .withColumn(
+                "email_masked",
+                F.regexp_replace("email", r"^(.)[^@]*@", "$1***@"))
             .drop("email"))
 
 
 def _stack_nights(spark, table, fallback):
     """Both nights of a table, stacked by name, tagged with night (1 or 2). changed_at is
     updated_at, or the column named by fallback where the night has no updated_at; updated_at is dropped."""
-    nights = [read_table(spark, table, day).withColumn("night", F.lit(day)) for day in (1, 2)]
+    nights = [
+        read_table(spark, table, day).withColumn("night", F.lit(day))
+        for day in (1, 2)]
     return (nights[0].unionByName(nights[1], allowMissingColumns=True)
-            .withColumn("changed_at", F.coalesce("updated_at", F.col(fallback).cast("timestamp")))
+            .withColumn("changed_at",
+                        F.coalesce("updated_at",
+                                   F.col(fallback).cast("timestamp")))
             .drop("updated_at"))
 
 
@@ -60,10 +67,15 @@ def latest_rewards(spark):
 def customers_with_state(spark):
     """Chapter 8. The newest version of each customer, email masked, with the parsed
     customer_metadata in a struct column called meta (meta.address_state, meta.device_type)."""
-    meta_schema = ("device_type STRING, address_state STRING, city STRING, pincode STRING, "
-                   "address STRUCT<address_state: STRING, city: STRING, pincode: STRING>, "
+    meta_schema = ("device_type STRING, address_state STRING, "
+                   "city STRING, pincode STRING, "
+                   "address STRUCT<address_state: STRING, "
+                   "city: STRING, pincode: STRING>, "
                    "app_version STRING, locale STRING")
-    latest = _latest(_stack_nights(spark, "customers", "registration_date"), "customer_id")
+    latest = _latest(
+        _stack_nights(spark, "customers", "registration_date"),
+        "customer_id")
     return (customers_masked(latest)
-            .withColumn("meta", F.from_json("customer_metadata", meta_schema))
+            .withColumn("meta",
+                        F.from_json("customer_metadata", meta_schema))
             .drop("customer_metadata"))

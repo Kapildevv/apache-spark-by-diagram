@@ -17,11 +17,14 @@ def nulls_in(df, column):
 counts = {c: nulls_in(stacked, c) for c in stacked.columns}
 print({c: n for c, n in counts.items() if n})
 
-numbered = stacked.withColumn("customer_num", F.col("customer_id").try_cast("int"))
+numbered = stacked.withColumn(
+    "customer_num", F.col("customer_id").try_cast("int"))
 for column in ["customer_num", "updated_at"]:
-    print(column, nulls_in(numbered.fillna("none"), column), nulls_in(numbered.fillna(0), column))
+    print(column, nulls_in(numbered.fillna("none"), column),
+          nulls_in(numbered.fillna(0), column))
 
 changed_at = F.coalesce("updated_at", "order_date")
-print(nulls_in(stacked.withColumn("changed_at", changed_at), "changed_at"))
+print(nulls_in(stacked.withColumn("changed_at", changed_at),
+               "changed_at"))
 print(stacked.dropna(subset=["updated_at"]).count())
 spark.stop()

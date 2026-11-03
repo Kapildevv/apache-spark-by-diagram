@@ -4,7 +4,8 @@ from saffron.session import start
 
 spark = start("ch02-products-schema")
 
-products = (spark.read.option("header", True).option("inferSchema", True)
+products = (spark.read.option("header", True)
+            .option("inferSchema", True)
             .csv(raw("products")))
 products.printSchema()
 print(products.dtypes)

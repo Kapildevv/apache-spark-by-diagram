@@ -13,10 +13,12 @@ spark = (SparkSession.builder.master(os.environ.get("SPARK_BOOK_MASTER", "local[
 spark.sparkContext.setLogLevel("ERROR")
 flash = flash_sale_orders(spark, 10000, 400000)
 try:
-    ids = flash.select("product_id").collect()          # the script that dies
+    # the script that dies
+    ids = flash.select("product_id").collect()
     print(Counter(row.product_id for row in ids).most_common(3))
 except Exception as error:
-    print(type(error).__name__, "|", re.search(r"SparkException: .*", str(error)).group())
+    print(type(error).__name__, "|",
+          re.search(r"SparkException: .*", str(error)).group())
 per_product = (flash.groupBy("product_id").count()
                .orderBy(F.desc("count"), "product_id").toPandas())
 print(per_product.shape, "|", per_product.head(3).values.tolist())

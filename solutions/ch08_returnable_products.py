@@ -6,10 +6,14 @@ from saffron.session import start
 
 spark = start("p8-1-returnable")
 products = (read_table(spark, "products")
-            .select("category", F.from_json("product_specs", "is_returnable BOOLEAN").alias("spec")))
+            .select(
+                "category",
+                F.from_json("product_specs", "is_returnable BOOLEAN")
+                .alias("spec")))
 
 # Filter first: only categories with a returnable product appear (4 rows).
-returnable = products.filter("spec.is_returnable").groupBy("category").count()
+returnable = (products.filter("spec.is_returnable")
+              .groupBy("category").count())
 returnable.orderBy(F.desc("count"), "category").show(truncate=False)
 print(returnable.agg(F.sum("count")).first()[0])
 

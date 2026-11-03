@@ -14,7 +14,8 @@ from monthly_report import enrich, summarise  # noqa: E402
 
 spark = start("p14-2-check")
 written = spark.read.parquet(str(OUTPUT / "monthly_report"))  # the folder the spark-submit run wrote
-totals = written.agg(F.sum("delivered_orders"), F.round(F.sum("revenue"), 2)).first()
+totals = written.agg(F.sum("delivered_orders"),
+                     F.round(F.sum("revenue"), 2)).first()
 print(f"delivered {totals[0]}, revenue {totals[1]:,.2f}")  # chapters 6 and 7: 619 and 2,790,726.95
 
 report = summarise(enrich(spark, str(ROOT / "data" / "raw")))

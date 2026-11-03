@@ -10,18 +10,23 @@ from pathlib import Path
 import pyspark.sql.functions as F
 from pyspark.sql import SparkSession
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "apps"))
+sys.path.insert(
+    0, str(Path(__file__).resolve().parent.parent / "apps"))
 from monthly_report import latest, read_night, summarise  # noqa: E402  the chapter's own functions
 from saffron.prepare import orders_with_dates  # noqa: E402
 
 
 def enrich(spark, folder):
     """The chapter's enrich, with one change: the payment's gateway_name stays in the table."""
-    orders = orders_with_dates(latest(spark, folder, "transactions", "order_id", "order_date"))
-    products = read_night(spark, folder, "products", 1).select("product_id", "category")
+    orders = orders_with_dates(latest(
+        spark, folder, "transactions", "order_id", "order_date"))
+    products = (read_night(spark, folder, "products", 1)
+                .select("product_id", "category"))
     payments = read_night(spark, folder, "pg_data", 1).select("order_id", "gateway_name", "payment_status")
-    rewards = (latest(spark, folder, "cashback_rewards", "reward_id", "crediting_date")
-               .select("order_id", "cashback_amount", F.col("status").alias("reward_status")))
+    rewards = (latest(spark, folder, "cashback_rewards", "reward_id",
+                      "crediting_date")
+               .select("order_id", "cashback_amount",
+                       F.col("status").alias("reward_status")))
     return (orders.join(products, "product_id")
             .join(payments, "order_id", "left")
             .join(rewards, "order_id", "left"))

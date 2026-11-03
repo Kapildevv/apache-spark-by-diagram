@@ -19,9 +19,12 @@ print([spark.conf.get(key, default) for key, default in SETTINGS])
 heap = spark._jvm.java.lang.Runtime.getRuntime().maxMemory() / 2**20
 usable = heap - 300
 unified = 0.6 * usable
-print(f"heap {heap:.0f}, usable {usable:.0f}, unified {unified:.1f} = "
-      f"storage {unified / 2:.1f} + execution {unified / 2:.1f}, user {usable - unified:.1f}")
-print("Executors tab:", round(ui("executors")[0]["maxMemory"] / 2**20, 1))
+print(f"heap {heap:.0f}, usable {usable:.0f}, "
+      f"unified {unified:.1f} = "
+      f"storage {unified / 2:.1f} + execution {unified / 2:.1f}, "
+      f"user {usable - unified:.1f}")
+print("Executors tab:",
+      round(ui("executors")[0]["maxMemory"] / 2**20, 1))
 
 # More checks, not printed in the chapter: the 10 GiB heap by the same arithmetic.
 print("--- more checks")

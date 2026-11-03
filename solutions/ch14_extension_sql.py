@@ -10,7 +10,8 @@ from pathlib import Path
 import pyspark.sql.functions as F
 from pyspark.sql import SparkSession
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "apps"))
+sys.path.insert(
+    0, str(Path(__file__).resolve().parent.parent / "apps"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ch14_extension import enrich  # noqa: E402  the chapter's enrich plus gateway_name, as in ch14_extension.py
 from monthly_report import latest, summarise  # noqa: E402

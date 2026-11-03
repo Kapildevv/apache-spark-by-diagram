@@ -1,7 +1,8 @@
 """DDL schemas of the five tables, and a helper that reads one night of one table."""
 from saffron.paths import raw
 
-ORDERS = ("order_id STRING, customer_id STRING, product_id STRING, order_date TIMESTAMP, "
+ORDERS = ("order_id STRING, customer_id STRING, product_id STRING, "
+          "order_date TIMESTAMP, "
           "quantity INT, total_amount DOUBLE, order_status STRING")
 CUSTOMERS = ("customer_id STRING, first_name STRING, last_name STRING, email STRING, "
              "registration_date DATE, customer_metadata STRING")

@@ -16,7 +16,8 @@ ddl = ("reward_id STRING, order_id STRING, cashback_amount DOUBLE, "
 counts = [jobs()]
 header_only = spark.read.option("header", True).csv(path)
 counts.append(jobs())
-inferred = spark.read.option("header", True).option("inferSchema", True).csv(path)
+inferred = (spark.read.option("header", True)
+            .option("inferSchema", True).csv(path))
 counts.append(jobs())
 explicit = spark.read.option("header", True).schema(ddl).csv(path)
 counts.append(jobs())

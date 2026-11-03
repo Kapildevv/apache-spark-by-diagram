@@ -8,8 +8,10 @@ spark = start("ch10-shuffle")
 print(spark.conf.get("spark.sql.shuffle.partitions"))
 spark.conf.set("spark.sql.adaptive.enabled", "false")
 months = (read_table(spark, "transactions")
-          .withColumn("order_month", F.date_format("order_date", "yyyy-MM"))
-          .groupBy("order_month").count().withColumn("p", F.spark_partition_id()))
+          .withColumn("order_month",
+                      F.date_format("order_date", "yyyy-MM"))
+          .groupBy("order_month").count()
+          .withColumn("p", F.spark_partition_id()))
 print({row["order_month"]: row["p"] for row in months.collect()})
 
 # More checks, not printed in the chapter.

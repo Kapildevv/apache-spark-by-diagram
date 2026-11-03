@@ -15,7 +15,9 @@ def _with_copies(orders, spark, first, last):
     """Cross the orders with copy numbers first .. last - 1; copy k adds the suffix -k to order_id."""
     copies = spark.range(first, last).withColumnRenamed("id", "copy")
     return (F.broadcast(orders).crossJoin(copies)
-            .withColumn("order_id", F.concat_ws("-", "order_id", F.col("copy").cast("string"))))
+            .withColumn("order_id",
+                        F.concat_ws("-", "order_id",
+                                    F.col("copy").cast("string"))))
 
 
 def bigger_orders(spark, copies):
@@ -28,5 +30,7 @@ def flash_sale_orders(spark, copies, hot_copies):
     """The bigger table plus hot_copies EXTRA copies of product PROD-5042's orders (copies numbered
     copies .. copies + hot_copies - 1): a constructed 'flash sale' that makes one product's key far
     larger than every other key."""
-    hot = _day1_orders(spark).filter(F.col("product_id") == HOT_PRODUCT)
-    return bigger_orders(spark, copies).unionByName(_with_copies(hot, spark, copies, copies + hot_copies))
+    hot = (_day1_orders(spark)
+           .filter(F.col("product_id") == HOT_PRODUCT))
+    return bigger_orders(spark, copies).unionByName(
+        _with_copies(hot, spark, copies, copies + hot_copies))

@@ -14,7 +14,8 @@ april.explain()
 print("range filter:", april.count(), "rows")
 
 by_month = (orders.filter(F.col("order_status") == "Delivered")
-            .filter(F.date_format("order_date", "yyyy-MM") == "2026-04"))
+            .filter(F.date_format("order_date", "yyyy-MM")
+                    == "2026-04"))
 by_month.explain()
 print("date_format filter:", by_month.count(), "rows")
 

@@ -8,6 +8,7 @@ spark = start("ch05-combine")
 both = orders_both_nights(spark)
 versions = both.drop("night").distinct()
 kept = both.dropDuplicates(["order_id"])
-print(both.count(), versions.count(), kept.count(), versions.count() - kept.count())
+print(both.count(), versions.count(), kept.count(),
+      versions.count() - kept.count())
 print(kept.filter(F.col("order_status") == "In-Transit").count())
 spark.stop()

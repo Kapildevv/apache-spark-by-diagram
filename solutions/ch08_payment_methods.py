@@ -6,10 +6,13 @@ from saffron.schemas import read_table
 from saffron.session import start
 
 spark = start("p8-2-methods")
-payments = read_table(spark, "pg_data").select("order_id", "payment_method")
-methods = (latest_orders(spark).select("order_id", "customer_id").join(payments, "order_id")
+payments = (read_table(spark, "pg_data")
+            .select("order_id", "payment_method"))
+methods = (latest_orders(spark).select("order_id", "customer_id")
+           .join(payments, "order_id")
            .groupBy("customer_id")
-           .agg(F.sort_array(F.collect_set("payment_method")).alias("methods")))
+           .agg(F.sort_array(F.collect_set("payment_method"))
+                .alias("methods")))
 many = methods.filter(F.size("methods") >= 3)
 print(many.count())
 print(many.select("customer_id", F.explode("methods")).count())

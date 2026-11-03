@@ -9,7 +9,8 @@ from pathlib import Path
 
 from pyspark.sql import SparkSession
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "apps"))
+sys.path.insert(
+    0, str(Path(__file__).resolve().parent.parent / "apps"))
 from monthly_report import enrich, summarise  # noqa: E402  the chapter's own functions
 
 
@@ -19,11 +20,15 @@ def main():
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
 
-    spark = SparkSession.builder.appName("p14-1-main").getOrCreate()  # no .master(): the flag decides
+    # no .master(): the flag decides
+    spark = SparkSession.builder.appName("p14-1-main").getOrCreate()
     spark.sparkContext.setLogLevel("ERROR")
     print("master:", spark.sparkContext.master)
-    summarise(enrich(spark, args.input)).write.mode("overwrite").partitionBy("order_month").parquet(args.output)
-    print(sorted(p.name for p in Path(args.output).glob("order_month=*")))
+    (summarise(enrich(spark, args.input))
+     .write.mode("overwrite").partitionBy("order_month")
+     .parquet(args.output))
+    print(sorted(p.name
+                 for p in Path(args.output).glob("order_month=*")))
     spark.stop()
 
 

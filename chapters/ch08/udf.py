@@ -19,23 +19,29 @@ def indian(x):
 
 
 rupees = F.udf(indian, "string")
-orders = read_table(spark, "transactions").select("order_id", "total_amount")
-shown = orders.select("order_id", rupees("total_amount").alias("amount"))
+orders = (read_table(spark, "transactions")
+          .select("order_id", "total_amount"))
+shown = orders.select("order_id",
+                      rupees("total_amount").alias("amount"))
 print(shown.first())
 
 # The plan: where the rows leave the JVM.
 shown.explain()
 
 # Without a return type the result is a string.
-doubled = spark.range(3).select(F.udf(lambda v: v * 2)("id").alias("v"))
+doubled = spark.range(3).select(
+    F.udf(lambda v: v * 2)("id").alias("v"))
 print(doubled.dtypes, doubled.collect())
 
 # The built-in replaces it.
-total = latest_orders(spark).filter("order_status = 'Delivered'").agg(F.sum("total_amount").alias("x"))
+total = (latest_orders(spark).filter("order_status = 'Delivered'")
+         .agg(F.sum("total_amount").alias("x")))
 exact = F.col("x").cast("decimal(14,2)")
 built_in = F.trim(F.to_char(exact, F.lit("99,99,99,999.99")))
-print(total.select(rupees("x").alias("udf"), built_in.alias("built_in")).first())
-nums = spark.range(1_000_000).select((F.col("id") * 7.77 + 0.5).cast("decimal(14,2)").alias("x"))
+print(total.select(rupees("x").alias("udf"),
+                   built_in.alias("built_in")).first())
+nums = spark.range(1_000_000).select(
+    (F.col("id") * 7.77 + 0.5).cast("decimal(14,2)").alias("x"))
 print(nums.filter(rupees("x") != built_in).count())
 
 # More checks, not printed in the chapter.

@@ -24,7 +24,9 @@ def scan_lines(df, *keys):
     return [line for line in text.splitlines() if line.startswith(keys)]
 
 
-payments = read_table(spark, "pg_data").select("payment_id", "order_id", "payment_method", "payment_status")
+payments = (read_table(spark, "pg_data")
+            .select("payment_id", "order_id", "payment_method",
+                    "payment_status"))
 payments.write.partitionBy("payment_method").parquet(str(folder))
 print(len(list(folder.glob("payment_method=*"))), "folders")
 
@@ -36,13 +38,16 @@ print(failed.count(), "rows;", scan_lines(failed, "PartitionFilters") or "no Par
 
 # Part 2: a managed table partitioned by category, pruned at run time by a join
 products = read_table(spark, "products")
-orders = latest_orders(spark).join(products.select("product_id", "category"), "product_id")
+orders = latest_orders(spark).join(
+    products.select("product_id", "category"), "product_id")
 orders.write.partitionBy("category").saveAsTable("orders_by_category")
 table = spark.table("orders_by_category")
 print(table.count(), "rows in the table")
-premium = products.filter("base_price >= 10000").select("product_id", "category")
+premium = (products.filter("base_price >= 10000")
+           .select("product_id", "category"))
 premium_orders = table.join(premium, ["product_id", "category"])
-print(premium_orders.count(), "premium orders;", *scan_lines(premium_orders, "PartitionFilters"))
+print(premium_orders.count(), "premium orders;",
+      *scan_lines(premium_orders, "PartitionFilters"))
 
 spark.sql("DROP TABLE orders_by_category")
 print(Path("spark-warehouse/orders_by_category").exists())

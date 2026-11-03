@@ -21,16 +21,21 @@ def plan(df):
 
 
 from_sql = spark.sql("""
-    SELECT category, COUNT(*) AS orders, ROUND(SUM(total_amount), 2) AS revenue
+    SELECT category, COUNT(*) AS orders,
+           ROUND(SUM(total_amount), 2) AS revenue
     FROM orders JOIN products USING (product_id)
-    WHERE order_status = 'Delivered' GROUP BY category ORDER BY category""")
-from_df = (orders.join(products, "product_id").filter("order_status = 'Delivered'")
+    WHERE order_status = 'Delivered'
+    GROUP BY category ORDER BY category""")
+from_df = (orders.join(products, "product_id")
+           .filter("order_status = 'Delivered'")
            .groupBy("category")
-           .agg(F.count("*").alias("orders"), F.round(F.sum("total_amount"), 2).alias("revenue"))
+           .agg(F.count("*").alias("orders"),
+                F.round(F.sum("total_amount"), 2).alias("revenue"))
            .orderBy("category"))
 sql_plan, df_plan = plan(from_sql), plan(from_df)
 print(sql_plan == df_plan, from_sql.collect() == from_df.collect())
-print([line.strip() for line in sql_plan.splitlines() if "Join" in line])
+print([line.strip() for line in sql_plan.splitlines()
+       if "Join" in line])
 
 # More checks, not printed in the chapter.
 print("--- more checks")

@@ -18,8 +18,9 @@ print(spark.conf.get("spark.sql.shuffle.partitions"))
 
 
 def revenue_by_month(df):
-    return df.groupBy("order_month").agg(F.count("*").alias("orders"),
-                                         F.round(F.sum("total_amount"), 2).alias("revenue"))
+    return (df.groupBy("order_month")
+            .agg(F.count("*").alias("orders"),
+                 F.round(F.sum("total_amount"), 2).alias("revenue")))
 
 
 def stages_of(group):

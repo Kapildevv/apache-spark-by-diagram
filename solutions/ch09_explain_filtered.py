@@ -19,5 +19,6 @@ def plan(df, mode):
 
 
 print(re.findall(r"== (.+?) ==", plan(q, "extended")))
-print([line for line in plan(q, "formatted").splitlines() if line.startswith(("PushedFilters", "ReadSchema"))])
+print([line for line in plan(q, "formatted").splitlines()
+       if line.startswith(("PushedFilters", "ReadSchema"))])
 spark.stop()

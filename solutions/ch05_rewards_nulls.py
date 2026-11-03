@@ -18,9 +18,12 @@ counts = {c: nulls_in(stacked, c) for c in stacked.columns}
 print({c: n for c, n in counts.items() if n})
 for value in (0, "none"):
     filled = stacked.fillna(value)
-    print(repr(value), [c for c in stacked.columns if nulls_in(filled, c) != counts[c]])
+    print(repr(value), [c for c in stacked.columns
+                        if nulls_in(filled, c) != counts[c]])
 
 print(stacked.dropna(subset=["updated_at"]).count())
-fixed = stacked.withColumn("updated_at", F.coalesce("updated_at", "crediting_date"))
-print(nulls_in(fixed, "updated_at"), fixed.dropna(subset=["updated_at"]).count())
+fixed = stacked.withColumn(
+    "updated_at", F.coalesce("updated_at", "crediting_date"))
+print(nulls_in(fixed, "updated_at"),
+      fixed.dropna(subset=["updated_at"]).count())
 spark.stop()

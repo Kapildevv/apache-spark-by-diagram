@@ -10,29 +10,39 @@ spark = start("ch08-nested")
 # Discover a schema from one sample of the text.
 customers = read_table(spark, "customers")
 sample = customers.first()["customer_metadata"]
-print(spark.range(1).select(F.schema_of_json(F.lit(sample))).first()[0])
+print(spark.range(1)
+      .select(F.schema_of_json(F.lit(sample))).first()[0])
 
 # Dot paths, and get_json_object for one value.
 people = customers_with_state(spark)
-print(people.groupBy("meta.address_state").count().orderBy(F.desc("count")).take(2))
+print(people.groupBy("meta.address_state").count()
+      .orderBy(F.desc("count")).take(2))
 print(people.select("meta.device_type", "meta.address.city").first())
-print(customers.select(F.get_json_object("customer_metadata", "$.address.city")).first()[0])
+print(customers.select(F.get_json_object(
+    "customer_metadata", "$.address.city")).first()[0])
 
 # NULLs inside JSON: error_code is null unless the payment failed.
 fields = "error_code STRING, processing_fee_inr DOUBLE"
-pay = read_table(spark, "pg_data").select("payment_status", F.from_json("pg_metadata", fields).alias("m"))
+pay = (read_table(spark, "pg_data")
+       .select("payment_status",
+               F.from_json("pg_metadata", fields).alias("m")))
 print(dict(pay.groupBy("payment_status").agg(F.count("m.error_code"))
            .orderBy("payment_status").collect()))
 
 # A schema that does not match the text: no error, one NULL field.
-bad = customers.select(F.from_json("customer_metadata", "device_type INT").alias("m"))
-print(bad.filter("m IS NULL").count(), bad.filter("m.device_type IS NULL").count())
+bad = customers.select(
+    F.from_json("customer_metadata", "device_type INT").alias("m"))
+print(bad.filter("m IS NULL").count(),
+      bad.filter("m.device_type IS NULL").count())
 
 # Arrays: the categories each customer buys from, then explode.
-products = read_table(spark, "products").select("product_id", "category")
-cats = (latest_orders(spark).join(products, "product_id").groupBy("customer_id")
+products = (read_table(spark, "products")
+            .select("product_id", "category"))
+cats = (latest_orders(spark).join(products, "product_id")
+        .groupBy("customer_id")
         .agg(F.sort_array(F.collect_set("category")).alias("cats")))
-print(cats.withColumn("n", F.size("cats")).filter("customer_id = 'CUST-1002'").first())
+print(cats.withColumn("n", F.size("cats"))
+      .filter("customer_id = 'CUST-1002'").first())
 print(cats.filter(F.array_contains("cats", "Groceries")).count())
 print(cats.select("customer_id", F.explode("cats")).count())
 

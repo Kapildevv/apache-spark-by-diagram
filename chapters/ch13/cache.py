@@ -9,9 +9,11 @@ big = bigger_orders(spark, 10000).cache()
 for label in ("first count", "second count"):
     t0 = time.perf_counter()
     rows = big.count()
-    print(f"{label}: {rows:,} rows in {time.perf_counter() - t0:.2f} s")
+    print(f"{label}: {rows:,} rows in "
+          f"{time.perf_counter() - t0:.2f} s")
 print(big.storageLevel)
-input("Storage tab at http://localhost:4040/storage/. Press Enter to unpersist. ")
+input("Storage tab at http://localhost:4040/storage/. "
+      "Press Enter to unpersist. ")
 big.unpersist()
 print(big.is_cached)
 spark.stop()

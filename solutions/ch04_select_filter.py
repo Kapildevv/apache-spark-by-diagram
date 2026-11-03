@@ -8,7 +8,8 @@ spark = start("p4-1-select-filter")
 orders = read_table(spark, "transactions")
 
 wanted = (orders
-          .filter((F.col("order_status") == "Delivered") & (F.col("quantity") >= 3))
+          .filter((F.col("order_status") == "Delivered")
+                  & (F.col("quantity") >= 3))
           .select("order_id", "quantity", "total_amount")
           .withColumnRenamed("total_amount", "amount")
           .drop("quantity"))

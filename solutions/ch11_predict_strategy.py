@@ -7,7 +7,8 @@ from saffron.schemas import read_table
 from saffron.session import start
 
 spark = start("p11-1-strategy")
-orders, payments = read_table(spark, "transactions"), read_table(spark, "pg_data")
+orders, payments = (read_table(spark, "transactions"),
+                    read_table(spark, "pg_data"))
 
 
 def plan(df):
@@ -18,6 +19,8 @@ def plan(df):
 
 
 text = plan(orders.join(payments, "order_id"))
-print(re.findall(r"\w+Join(?= \[)", text), re.findall(r"Build(?:Left|Right)", text))
-print("shuffle exchanges:", text.count("Exchange hashpartitioning"), "| broadcast exchanges:", text.count("BroadcastExchange"))
+print(re.findall(r"\w+Join(?= \[)", text),
+      re.findall(r"Build(?:Left|Right)", text))
+print("shuffle exchanges:", text.count("Exchange hashpartitioning"),
+      "| broadcast exchanges:", text.count("BroadcastExchange"))
 spark.stop()

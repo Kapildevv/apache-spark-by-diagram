@@ -49,7 +49,8 @@ print(len(rows), rows[0].order_id)
 
 # Arjun's sample: customers read with their schema and escape, email left out.
 sample = read_table(spark, "customers")
-keep = ["customer_id", "first_name", "registration_date", "customer_metadata"]
+keep = ["customer_id", "first_name", "registration_date",
+        "customer_metadata"]
 sample.select(keep).show(5)
 
 spark.stop()

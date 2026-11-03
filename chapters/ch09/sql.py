@@ -8,7 +8,9 @@ orders, products = latest_orders(spark), read_table(spark, "products")
 orders.createOrReplaceTempView("orders")
 products.createOrReplaceTempView("products")
 print([t.name for t in spark.catalog.listTables()])
-by_status = spark.sql("SELECT order_status, COUNT(*) AS n FROM orders GROUP BY order_status ORDER BY n DESC")
+by_status = spark.sql(
+    "SELECT order_status, COUNT(*) AS n FROM orders "
+    "GROUP BY order_status ORDER BY n DESC")
 print(by_status.collect(), type(by_status).__name__)
 
 # A CTE with a window function: the newest version of every order, in SQL.
@@ -16,15 +18,19 @@ orders_both_nights(spark).createOrReplaceTempView("both_nights")
 print(spark.sql("""
     WITH numbered AS (
       SELECT order_status, ROW_NUMBER() OVER (
-        PARTITION BY order_id ORDER BY changed_at DESC, night DESC) AS rn
+        PARTITION BY order_id
+        ORDER BY changed_at DESC, night DESC) AS rn
       FROM both_nights)
     SELECT order_status, COUNT(*) AS n FROM numbered WHERE rn = 1
     GROUP BY order_status ORDER BY n DESC""").collect())
 
 # A value from outside: pasted into the SQL text, then passed with args=.
 typed = "x' OR '1'='1"
-unsafe = spark.sql(f"SELECT COUNT(*) AS n FROM orders WHERE order_status = '{typed}'")
-safe = spark.sql("SELECT COUNT(*) AS n FROM orders WHERE order_status = :status", args={"status": typed})
+unsafe = spark.sql(f"SELECT COUNT(*) AS n FROM orders "
+                   f"WHERE order_status = '{typed}'")
+safe = spark.sql("SELECT COUNT(*) AS n FROM orders "
+                 "WHERE order_status = :status",
+                 args={"status": typed})
 print(unsafe.first()["n"], safe.first()["n"])
 
 # More checks, not printed in the chapter.

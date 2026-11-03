@@ -28,18 +28,26 @@ def scan_lines(df, *keys):
 by_month = spark.read.parquet(str(out / "by_month"))
 april = by_month.filter(F.col("order_month") == "2026-04")
 print(april.count(), *scan_lines(april, "PartitionFilters"), sep="\n")
-delivered = by_month.filter(F.col("order_status") == "Delivered").select("total_amount")
-print(*scan_lines(delivered, "PartitionFilters", "PushedFilters", "ReadSchema"), sep="\n")
+delivered = (by_month.filter(F.col("order_status") == "Delivered")
+             .select("total_amount"))
+print(*scan_lines(delivered, "PartitionFilters", "PushedFilters",
+                  "ReadSchema"), sep="\n")
 print(delivered.agg(F.round(F.sum("total_amount"), 2)).first()[0])
 
 # --- Dynamic partition pruning
-by_month.coalesce(1).write.partitionBy("category").parquet(str(out / "by_category"))
+by_month.coalesce(1).write.partitionBy("category").parquet(
+    str(out / "by_category"))
 by_category = spark.read.parquet(str(out / "by_category"))
-steelorra = read_table(spark, "products").filter("brand = 'Steelorra'").select("product_id", "category")
+steelorra = (read_table(spark, "products")
+             .filter("brand = 'Steelorra'")
+             .select("product_id", "category"))
 on_both = by_category.join(steelorra, ["product_id", "category"])
 on_id = by_category.join(steelorra.select("product_id"), "product_id")
 for df in (on_both, on_id):
-    print(df.count(), *(scan_lines(df, "PartitionFilters") or ["no PartitionFilters line"]), sep="\n")
+    print(df.count(),
+          *(scan_lines(df, "PartitionFilters")
+            or ["no PartitionFilters line"]),
+          sep="\n")
 
 # More checks, not printed in the chapter.
 print("--- more checks")

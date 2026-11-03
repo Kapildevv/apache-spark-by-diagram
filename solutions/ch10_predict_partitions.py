@@ -9,14 +9,19 @@ spark = start("p10-1-partitions")
 
 
 def revenue_by_month(df):
-    return df.groupBy("order_month").agg(F.count("*").alias("orders"),
-                                         F.round(F.sum("total_amount"), 2).alias("revenue"))
+    return (df.groupBy("order_month")
+            .agg(F.count("*").alias("orders"),
+                 F.round(F.sum("total_amount"), 2).alias("revenue")))
 
 
 orders = read_table(spark, "transactions")
 print("orders:", orders.rdd.getNumPartitions())
 print("range:", spark.range(0, 100000).rdd.getNumPartitions())
-print("revenue by month, AQE on:", revenue_by_month(orders_with_dates(orders)).rdd.getNumPartitions())
+print("revenue by month, AQE on:",
+      revenue_by_month(orders_with_dates(orders))
+      .rdd.getNumPartitions())
 spark.conf.set("spark.sql.adaptive.enabled", "false")
-print("revenue by month, AQE off:", revenue_by_month(orders_with_dates(orders)).rdd.getNumPartitions())
+print("revenue by month, AQE off:",
+      revenue_by_month(orders_with_dates(orders))
+      .rdd.getNumPartitions())
 spark.stop()

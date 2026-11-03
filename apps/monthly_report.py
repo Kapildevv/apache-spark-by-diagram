@@ -35,39 +35,58 @@ def enrich(spark, folder):
     """The latest orders with month, category, payment status and reward (chapters 4, 6 and 7).
     The payments are identical on both nights; the products change only ten base prices, which the report
     does not use, and keep their categories, so night 1 serves both."""
-    orders = orders_with_dates(latest(spark, folder, "transactions", "order_id", "order_date"))
-    products = read_night(spark, folder, "products", 1).select("product_id", "category")
-    payments = read_night(spark, folder, "pg_data", 1).select("order_id", "payment_status")
-    rewards = (latest(spark, folder, "cashback_rewards", "reward_id", "crediting_date")
-               .select("order_id", "cashback_amount", F.col("status").alias("reward_status")))
+    orders = orders_with_dates(latest(
+        spark, folder, "transactions", "order_id", "order_date"))
+    products = (read_night(spark, folder, "products", 1)
+                .select("product_id", "category"))
+    payments = (read_night(spark, folder, "pg_data", 1)
+                .select("order_id", "payment_status"))
+    rewards = (latest(spark, folder, "cashback_rewards", "reward_id",
+                      "crediting_date")
+               .select("order_id", "cashback_amount",
+                       F.col("status").alias("reward_status")))
     return (orders.join(products, "product_id")
             .join(payments, "order_id", "left")
             .join(rewards, "order_id", "left"))
 
 
 def summarise(enriched):
-    """One row for each month and category (chapter 6's conditional aggregates)."""
+    ("One row for each month and category "
+     "(chapter 6's conditional aggregates).")
     delivered = F.col("order_status") == "Delivered"
     credited = F.col("reward_status") == "Credited"
     failed = F.col("payment_status") == "Failed"
     return enriched.groupBy("order_month", "category").agg(
-        F.sum(F.when(delivered, 1).otherwise(0)).alias("delivered_orders"),
-        F.round(F.sum(F.when(delivered, F.col("total_amount")).otherwise(0)), 2).alias("revenue"),
-        F.round(F.sum(F.when(credited, F.col("cashback_amount")).otherwise(0)), 2).alias("cashback_credited"),
-        F.round(F.avg(F.when(failed, 1).otherwise(0)), 4).alias("payment_failure_rate"))
+        F.sum(F.when(delivered, 1).otherwise(0)).alias(
+            "delivered_orders"),
+        F.round(F.sum(F.when(delivered, F.col("total_amount"))
+                      .otherwise(0)), 2).alias("revenue"),
+        F.round(F.sum(F.when(credited, F.col("cashback_amount"))
+                      .otherwise(0)), 2).alias("cashback_credited"),
+        F.round(F.avg(F.when(failed, 1).otherwise(0)),
+                4).alias("payment_failure_rate"))
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Write Saffron Lane's monthly report as Parquet.")
-    parser.add_argument("--input", required=True, help="folder that holds day1/ and day2/")
-    parser.add_argument("--output", required=True, help="folder to write; every run replaces it")
+    parser = argparse.ArgumentParser(
+        description="Write Saffron Lane's monthly report as Parquet.")
+    parser.add_argument("--input", required=True,
+                        help="folder that holds day1/ and day2/")
+    parser.add_argument("--output", required=True,
+                        help="folder to write; every run replaces it")
     args = parser.parse_args()
 
-    spark = SparkSession.builder.appName("monthly-report").getOrCreate()  # no .master(): spark-submit decides
+    # no .master(): spark-submit decides
+    spark = (SparkSession.builder
+             .appName("monthly-report")
+             .getOrCreate())
     spark.sparkContext.setLogLevel("ERROR")
-    print(f"monthly report on {spark.sparkContext.master}: {args.input} -> {args.output}")
+    print(f"monthly report on {spark.sparkContext.master}: "
+          f"{args.input} -> {args.output}")
     report = summarise(enrich(spark, args.input))
-    report.write.mode("overwrite").partitionBy("order_month").parquet(args.output)  # chapter 12
+    # chapter 12
+    report.write.mode("overwrite").partitionBy("order_month").parquet(
+        args.output)
     spark.stop()
 
 

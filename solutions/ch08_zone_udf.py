@@ -12,14 +12,20 @@ from saffron.prepare import customers_with_state
 from saffron.session import start
 
 spark = start("p8-3-zones")
-pincodes = customers_with_state(spark).select(F.col("meta.pincode").alias("pincode"))
+pincodes = (customers_with_state(spark)
+            .select(F.col("meta.pincode").alias("pincode")))
 
-zones = {"1": "North", "2": "North", "3": "West", "4": "West", "5": "South", "6": "South", "7": "East", "8": "East"}
-zone_udf = F.udf(lambda pincode: None if pincode is None else zones.get(pincode[0], "Other"), "string")
+zones = {"1": "North", "2": "North", "3": "West", "4": "West",
+         "5": "South", "6": "South", "7": "East", "8": "East"}
+zone_udf = F.udf(lambda pincode: None if pincode is None
+                 else zones.get(pincode[0], "Other"), "string")
 
 first = F.substring("pincode", 1, 1)
-zone_when = (F.when(first.isin("1", "2"), "North").when(first.isin("3", "4"), "West")
-             .when(first.isin("5", "6"), "South").when(first.isin("7", "8"), "East").otherwise("Other"))
+zone_when = (F.when(first.isin("1", "2"), "North")
+             .when(first.isin("3", "4"), "West")
+             .when(first.isin("5", "6"), "South")
+             .when(first.isin("7", "8"), "East")
+             .otherwise("Other"))
 
 by_udf = pincodes.groupBy(zone_udf("pincode").alias("zone")).count()
 by_when = pincodes.groupBy(zone_when.alias("zone")).count()

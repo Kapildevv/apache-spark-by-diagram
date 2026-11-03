@@ -4,7 +4,8 @@ from saffron.session import start
 
 spark = start("ch09-plans")
 read_table(spark, "products").createOrReplaceTempView("products")
-q = spark.sql("SELECT product_name FROM products WHERE base_price > 1000")
+q = spark.sql("SELECT product_name FROM products "
+              "WHERE base_price > 1000")
 q.explain(mode="extended")
 q.explain(mode="formatted")
 

@@ -36,12 +36,14 @@ print(f"tasks: {len(ms)} | slowest {slowest / 1000:.1f} s | median {median / 100
 def by_category(joined):
     return (joined.groupBy("category")
             .agg(F.count("*").alias("orders"),
-                 F.sum(F.col("total_amount").cast("decimal(18,2)")).alias("revenue")))
+                 F.sum(F.col("total_amount")
+                       .cast("decimal(18,2)")).alias("revenue")))
 
 
 salts = 4
 salted_orders = flash.withColumn("salt", F.col("copy") % salts)
-salted_products = products.withColumn("salt", F.explode(F.sequence(F.lit(0), F.lit(salts - 1))))
+salted_products = products.withColumn(
+    "salt", F.explode(F.sequence(F.lit(0), F.lit(salts - 1))))
 salted = salted_orders.join(salted_products, ["product_id", "salt"])
 plain_totals, salted_totals = sorted(by_category(plain).collect()), sorted(by_category(salted).collect())
 for row in salted_totals:

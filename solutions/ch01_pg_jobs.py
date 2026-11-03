@@ -2,7 +2,10 @@ from pyspark.sql import SparkSession
 
 from saffron.paths import raw
 
-spark = SparkSession.builder.master("local[*]").appName("pg-jobs").getOrCreate()
+spark = (SparkSession.builder
+         .master("local[*]")
+         .appName("pg-jobs")
+         .getOrCreate())
 spark.sparkContext.setLogLevel("ERROR")
 
 payments = spark.read.option("header", True).csv(raw("pg_data"))

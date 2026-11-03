@@ -10,7 +10,9 @@ night2 = read_table(spark, "cashback_rewards", day=2).withColumn("night", F.lit(
 stacked = night1.unionByName(night2, allowMissingColumns=True)
 print(stacked.distinct().count())
 
-comparable = (stacked.withColumn("updated_at", F.coalesce("updated_at", "crediting_date"))
+comparable = (stacked
+              .withColumn("updated_at",
+                          F.coalesce("updated_at", "crediting_date"))
               .drop("night"))
 print(comparable.distinct().count())
 

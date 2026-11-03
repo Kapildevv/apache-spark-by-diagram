@@ -7,7 +7,8 @@ from saffron.schemas import read_table
 from saffron.session import start
 
 spark = start("p11-2-force-merge")
-orders, payments = read_table(spark, "transactions"), read_table(spark, "pg_data")
+orders, payments = (read_table(spark, "transactions"),
+                    read_table(spark, "pg_data"))
 
 
 def plan(df):

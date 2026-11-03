@@ -9,7 +9,9 @@ night1 = read_table(spark, "transactions", day=1).withColumn("night", F.lit(1))
 night2 = read_table(spark, "transactions", day=2).withColumn("night", F.lit(2))
 stacked = night1.unionByName(night2, allowMissingColumns=True)
 
-comparable = (stacked.withColumn("changed_at", F.coalesce("updated_at", "order_date"))
+comparable = (stacked
+              .withColumn("changed_at",
+                          F.coalesce("updated_at", "order_date"))
               .drop("updated_at", "night"))
 print(stacked.distinct().count(), comparable.distinct().count())
 

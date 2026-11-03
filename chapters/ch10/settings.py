@@ -11,7 +11,8 @@ spark = (SparkSession.builder.master(master).appName("ch10-settings")
 spark.sparkContext.setLogLevel("ERROR")
 print(spark.conf.get("spark.sql.shuffle.partitions"))
 print(spark.conf.get("spark.driver.memory", "1g"))
-print(spark.conf.isModifiable("spark.sql.files.maxPartitionBytes"), spark.conf.isModifiable("spark.driver.memory"))
+print(spark.conf.isModifiable("spark.sql.files.maxPartitionBytes"),
+      spark.conf.isModifiable("spark.driver.memory"))
 spark.conf.set("spark.sql.files.maxPartitionBytes", "16384")
 print(read_table(spark, "transactions").rdd.getNumPartitions())
 

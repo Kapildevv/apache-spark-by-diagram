@@ -5,8 +5,10 @@ from saffron.schemas import read_table
 from saffron.session import start
 
 spark = start("p6-1-payment-rates")
-payments = read_table(spark, "pg_data").select("payment_method", "payment_status")
-payments.groupBy("payment_method").count().orderBy(F.desc("count")).show()
+payments = (read_table(spark, "pg_data")
+            .select("payment_method", "payment_status"))
+(payments.groupBy("payment_method").count()
+ .orderBy(F.desc("count")).show())
 payments.groupBy("payment_status").count().orderBy(F.desc("count")).show()
 
 failed = F.when(F.col("payment_status") == "Failed", 1).otherwise(0)

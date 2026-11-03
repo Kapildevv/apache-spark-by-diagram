@@ -9,7 +9,11 @@ rewards = latest_rewards(spark)
 print(orders.join(rewards, "order_id", "left_anti").count())
 
 customers = read_table(spark, "customers").select("customer_id")
-payments = read_table(spark, "pg_data").select("order_id", "payment_status")
-failed_orders = orders.join(payments.filter("payment_status = 'Failed'"), "order_id", "left_semi")
-print(customers.join(failed_orders, "customer_id", "left_semi").count())
+payments = (read_table(spark, "pg_data")
+            .select("order_id", "payment_status"))
+failed_orders = orders.join(
+    payments.filter("payment_status = 'Failed'"),
+    "order_id", "left_semi")
+print(customers.join(failed_orders, "customer_id", "left_semi")
+      .count())
 spark.stop()

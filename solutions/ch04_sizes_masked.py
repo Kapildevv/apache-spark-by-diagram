@@ -17,6 +17,7 @@ sized = (orders
 rows = sized.groupBy("order_size").count().collect()
 print(sorted(tuple(row) for row in rows))
 
-mask = F.regexp_replace("email", r"^(.)[^@]*@", "$1***@").alias("email_masked")
+mask = (F.regexp_replace("email", r"^(.)[^@]*@", "$1***@")
+        .alias("email_masked"))
 print([row.email_masked for row in customers.select(mask).take(3)])
 spark.stop()

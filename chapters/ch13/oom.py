@@ -7,7 +7,8 @@ from pyspark.sql import SparkSession
 from saffron.bigger import flash_sale_orders
 from saffron.schemas import read_table
 
-settings = {"spark.driver.memory": sys.argv[1] if len(sys.argv) > 1 else "1g",
+settings = {"spark.driver.memory":
+                sys.argv[1] if len(sys.argv) > 1 else "1g",
             "spark.sql.autoBroadcastJoinThreshold": "-1",
             "spark.sql.adaptive.skewJoin.enabled": "false"}
 if "skew" in sys.argv:
@@ -19,15 +20,21 @@ for key, value in settings.items():
     builder = builder.config(key, value)
 spark = builder.getOrCreate()
 spark.sparkContext.setLogLevel("ERROR")
-print("heap:", spark._jvm.java.lang.Runtime.getRuntime().maxMemory() // 2**20, "MiB")
-flash = flash_sale_orders(spark, 10000, 400000).join(read_table(spark, "products"), "product_id")
+print("heap:",
+      spark._jvm.java.lang.Runtime.getRuntime().maxMemory() // 2**20,
+      "MiB")
+flash = (flash_sale_orders(spark, 10000, 400000)
+         .join(read_table(spark, "products"), "product_id"))
 try:
     flash.write.format("noop").mode("overwrite").save()
-    input("Join finished. Spark UI at http://localhost:4040. Press Enter to stop. ")
+    input("Join finished. Spark UI at http://localhost:4040. "
+          "Press Enter to stop. ")
 except Exception as error:
     try:
         print(type(error).__name__, str(error).splitlines()[0])
-    except Exception as gone:  # a Py4JJavaError asks the JVM for its message, and the JVM may be gone already
+    # a Py4JJavaError asks the JVM for its message, and the JVM may be
+    # gone already
+    except Exception as gone:
         print(type(gone).__name__, gone)
     try:
         spark.range(5).count()

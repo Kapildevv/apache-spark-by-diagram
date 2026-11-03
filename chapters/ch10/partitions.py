@@ -8,15 +8,19 @@ from saffron.session import start
 spark = start("ch10-partitions")
 orders = read_table(spark, "transactions")
 numbers = spark.range(0, 100000)
-print("orders:", orders.rdd.getNumPartitions(), "| range:", numbers.rdd.getNumPartitions(),
+print("orders:", orders.rdd.getNumPartitions(),
+      "| range:", numbers.rdd.getNumPartitions(),
       "| slots:", spark.sparkContext.defaultParallelism)
-per_partition = numbers.groupBy(F.spark_partition_id().alias("p")).count()
+per_partition = (numbers.groupBy(F.spark_partition_id().alias("p"))
+                 .count())
 print(sorted(tuple(row) for row in per_partition.collect()))
 
 big = bigger_orders(spark, 10000)
 sizes = big.groupBy(F.spark_partition_id().alias("p")).count()
-print("bigger:", big.rdd.getNumPartitions(), sorted(row["count"] for row in sizes.collect()))
-narrow = big.filter(F.col("order_status") == "Delivered").select("order_id", "total_amount")
+print("bigger:", big.rdd.getNumPartitions(),
+      sorted(row["count"] for row in sizes.collect()))
+narrow = (big.filter(F.col("order_status") == "Delivered")
+          .select("order_id", "total_amount"))
 print("after filter and select:", narrow.rdd.getNumPartitions())
 
 # More checks, not printed in the chapter.

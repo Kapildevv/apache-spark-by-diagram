@@ -11,11 +11,13 @@ spark = (SparkSession.builder.master(os.environ.get("SPARK_BOOK_MASTER", "local[
 spark.sparkContext.setLogLevel("ERROR")
 big = bigger_orders(spark, 10000)
 tries = {"big.collect()": big.collect,
-         "per-month counts": big.groupBy("order_month").count().collect,
+         "per-month counts":
+             big.groupBy("order_month").count().collect,
          "big.limit(50)": big.limit(50).collect}
 for name, run in tries.items():
     try:
         print(f"{name}: {len(run())} rows")
     except Exception as error:
-        print(f"{name}: {type(error).__name__}, {re.search(r'Total size.*', str(error)).group()}")
+        print(f"{name}: {type(error).__name__}, "
+              f"{re.search(r'Total size.*', str(error)).group()}")
 spark.stop()

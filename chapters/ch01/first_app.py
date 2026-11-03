@@ -2,7 +2,10 @@ from pyspark.sql import SparkSession
 
 from saffron.paths import raw
 
-spark = SparkSession.builder.master("local[*]").appName("first-app").getOrCreate()
+spark = (SparkSession.builder
+         .master("local[*]")
+         .appName("first-app")
+         .getOrCreate())
 spark.sparkContext.setLogLevel("ERROR")
 
 print("Spark version:", spark.version)

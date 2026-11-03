@@ -34,14 +34,17 @@ buffer = io.StringIO()
 with contextlib.redirect_stdout(buffer):
     report.explain()
 final = re.sub(r"#\d+L?|plan_id=\d+", "", buffer.getvalue()).split("== Initial Plan ==")[0]
-# findall picks out the name of every join node in the final plan (chapter 11)
-print(re.findall(r"\w+Join(?= \[)", final), final.count("Exchange hashpartitioning"), "shuffles,",
+# findall picks out the name of every join node in the final plan
+# (chapter 11)
+print(re.findall(r"\w+Join(?= \[)", final),
+      final.count("Exchange hashpartitioning"), "shuffles,",
       final.count("Sort ["), "sorts")
 
 jobs = [job for job in ui("jobs") if job.get("jobGroup") == "report"]
 stage_ids = {sid for job in jobs for sid in job["stageIds"]}
 ran = {s["stageId"]: s["numTasks"] for s in ui("stages") if s["stageId"] in stage_ids and s["status"] == "COMPLETE"}
-print(f"{len(jobs)} jobs; stages that ran and their tasks: {dict(sorted(ran.items()))}")
+print(f"{len(jobs)} jobs; stages that ran and their tasks: "
+      f"{dict(sorted(ran.items()))}")
 
 # More checks, not printed in the chapter.
 print("--- more checks")

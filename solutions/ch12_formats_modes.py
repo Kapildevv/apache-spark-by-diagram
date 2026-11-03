@@ -22,12 +22,15 @@ except AnalysisException as err:
     print(str(err).split()[0])
 orders.write.mode("overwrite").parquet(str(folder / "parquet"))
 
-readers = {"csv": spark.read.option("header", True).csv, "json": spark.read.json, "parquet": spark.read.parquet}
+readers = {"csv": spark.read.option("header", True).csv,
+           "json": spark.read.json,
+           "parquet": spark.read.parquet}
 for kind, read in readers.items():
     back = read(str(folder / kind))
     types = dict(back.dtypes)
     print(f"{kind:<8}{back.count()} rows, first column {back.columns[0]:<12}"
-          f"order_date {types['order_date']}, quantity {types['quantity']}")
+          f"order_date {types['order_date']}, "
+          f"quantity {types['quantity']}")
 
 shutil.rmtree(folder)
 spark.stop()

@@ -37,15 +37,21 @@ def plan(df):
 
 def orders_enriched(spark):
     """The latest orders with order_month, the product's category and the customer's state."""
-    products = read_table(spark, "products").select("product_id", "category")
-    states = customers_with_state(spark).select("customer_id", F.col("meta.address_state").alias("state"))
-    return orders_with_dates(latest_orders(spark)).join(products, "product_id").join(states, "customer_id")
+    products = (read_table(spark, "products")
+                .select("product_id", "category"))
+    states = (customers_with_state(spark)
+              .select("customer_id",
+                      F.col("meta.address_state").alias("state")))
+    return (orders_with_dates(latest_orders(spark))
+            .join(products, "product_id")
+            .join(states, "customer_id"))
 
 
 # --- Save modes and part files
 lat = latest_orders(spark)
 lat.write.parquet(str(out / "parquet"))
-print(lat.rdd.getNumPartitions(), sorted(p.name for p in (out / "parquet").glob("[!.]*")))
+print(lat.rdd.getNumPartitions(),
+      sorted(p.name for p in (out / "parquet").glob("[!.]*")))
 try:
     lat.write.parquet(str(out / "parquet"))
 except AnalysisException as err:
@@ -54,35 +60,51 @@ except AnalysisException as err:
 # --- CSV, JSON and Parquet
 lat.write.option("header", True).csv(str(out / "csv"))
 lat.write.json(str(out / "json"))
-readers = {"csv": spark.read.option("header", True).csv, "json": spark.read.json, "parquet": spark.read.parquet}
+readers = {"csv": spark.read.option("header", True).csv,
+           "json": spark.read.json,
+           "parquet": spark.read.parquet}
 for kind, read in readers.items():
     back = read(str(out / kind))
     types = dict(back.dtypes)
-    print(f"{kind:<8}{part_files(out / kind)[1]:>8,} bytes  first column {back.columns[0]:<12}"
-          f"order_date {types['order_date']}, quantity {types['quantity']}")
+    print(f"{kind:<8}{part_files(out / kind)[1]:>8,} bytes  "
+          f"first column {back.columns[0]:<12}"
+          f"order_date {types['order_date']}, "
+          f"quantity {types['quantity']}")
 
 # --- How many files: repartition and coalesce
 big = bigger_orders(spark, 100)  # 75,000 rows in 4 partitions
 folder = out / "files"
-for label, df in (("as is", big), ("repartition(8)", big.repartition(8)), ("coalesce(2)", big.coalesce(2))):
+for label, df in (("as is", big),
+                  ("repartition(8)", big.repartition(8)),
+                  ("coalesce(2)", big.coalesce(2))):
     df.write.mode("overwrite").parquet(str(folder))
-    node = re.search(r"Exchange RoundRobinPartitioning\(\d+\)|Coalesce \d+", plan(df))
-    print(f"{label:<16}{node.group() if node else '-':<36}{part_files(folder)[0]} part files")
+    node = re.search(
+        r"Exchange RoundRobinPartitioning\(\d+\)|Coalesce \d+",
+        plan(df))
+    print(f"{label:<16}{node.group() if node else '-':<36}"
+          f"{part_files(folder)[0]} part files")
 
 # --- partitionBy: a folder for each month
 enriched = orders_enriched(spark)
-enriched.write.partitionBy("order_month").parquet(str(out / "by_month"))
-enriched.repartition(200).write.partitionBy("order_month").parquet(str(out / "by_month_200"))
+enriched.write.partitionBy("order_month").parquet(
+    str(out / "by_month"))
+enriched.repartition(200).write.partitionBy("order_month").parquet(
+    str(out / "by_month_200"))
 for name in ("by_month", "by_month_200"):
-    print(name, [part_files(m)[0] for m in sorted((out / name).glob("order_month=*"))])
+    print(name, [part_files(m)[0]
+                 for m in sorted((out / name).glob("order_month=*"))])
 
 # --- Tables and the warehouse
-enriched.write.partitionBy("order_month").mode("overwrite").saveAsTable("orders_enriched")
-print([(t.name, t.tableType) for t in spark.catalog.listTables()], spark.table("orders_enriched").count())
+(enriched.write.partitionBy("order_month").mode("overwrite")
+ .saveAsTable("orders_enriched"))
+print([(t.name, t.tableType) for t in spark.catalog.listTables()],
+      spark.table("orders_enriched").count())
 
 # --- The nightly orders, solved
-april = spark.table("orders_enriched").filter("order_month = '2026-04' AND order_status = 'Delivered'")
-print(april.count(), april.agg(F.round(F.sum("total_amount"), 2)).first()[0])
+april = spark.table("orders_enriched").filter(
+    "order_month = '2026-04' AND order_status = 'Delivered'")
+print(april.count(),
+      april.agg(F.round(F.sum("total_amount"), 2)).first()[0])
 
 # More checks, not printed in the chapter.
 print("--- more checks")
